@@ -99,7 +99,8 @@ function renderLock(msg = "") {
   $("#tabs").hidden = true;
   view().innerHTML = `<div class="lock">
     <div class="logo">✦</div>
-    <div class="title"><span>Library</span></div>
+    <div class="title"><span>Night Library</span></div>
+    <div class="mut" style="margin:-6px 0 10px">All your apps and files</div>
     <div class="mut" style="margin-bottom:22px">Enter your passphrase to unlock. Everything stays encrypted until it reaches this phone.</div>
     <form id="unlock" autocomplete="off">
       <input class="field" id="pass" type="password" placeholder="passphrase" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go">
@@ -146,16 +147,52 @@ async function route() {
   }
   if (!S.data) { try { await loadData(); } catch (e) { return renderLock(); } }
   $("#tabs").hidden = false;
-  const h = (location.hash || "#today").slice(1);
+  const h = (location.hash || "#apps").slice(1);
   const [name, arg] = h.split("/");
-  const tab = { today: "today", needs: "today", recap: "today", library: "library", a: "library", file: "library", search: "search", settings: "settings" }[name] || "today";
+  const tab = { apps: "apps", app: "apps", today: "today", needs: "today", recap: "today", library: "library", a: "library", file: "library", search: "search", settings: "settings" }[name] || "today";
   document.querySelectorAll("#tabs a").forEach((a) => a.classList.toggle("on", a.dataset.tab === tab));
-  closeReader();
+  closeReader(); closeAppFrame();
   window.scrollTo(0, 0);
-  const fn = { today: renderToday, needs: renderNeeds, recap: renderRecap, library: renderLibrary, a: renderAssistant, file: renderFile, search: renderSearch, settings: renderSettings }[name] || renderToday;
+  const fn = { apps: renderApps, app: renderApp, today: renderToday, needs: renderNeeds, recap: renderRecap, library: renderLibrary, a: renderAssistant, file: renderFile, search: renderSearch, settings: renderSettings }[name] || renderToday;
   try { await fn(arg && decodeURIComponent(arg)); } catch (e) { console.error(e); view().innerHTML = `<div class="empty">Something went wrong: ${esc(e.message)}</div>`; }
 }
 window.addEventListener("hashchange", () => { S.navCount = (S.navCount || 0) + 1; route(); });
+
+/* ---------------- Apps hub ---------------- */
+function appCard(a) {
+  if (a.kind === "public") return `<a class="appc gl" href="${esc(a.url)}" target="_blank" rel="noopener"><span class="ae">${esc(a.emoji)}</span><span class="at"><b>${esc(a.name)}</b><small>${esc(a.description)}</small></span><span class="ak pub">Open ↗</span></a>`;
+  if (a.kind === "needs-hosting") return `<div class="appc gl dim"><span class="ae">${esc(a.emoji)}</span><span class="at"><b>${esc(a.name)}</b><small>${esc(a.description)}</small><small class="note">🔒 ${esc(a.note || "Needs hosting before it can open here.")}</small></span><span class="ak">Needs hosting</span></div>`;
+  return `<a class="appc gl" href="#app/${esc(a.id)}"><span class="ae">${esc(a.emoji)}</span><span class="at"><b>${esc(a.name)}</b><small>${esc(a.description)}</small></span><span class="ak">🔓 Open</span></a>`;
+}
+function renderApps() {
+  const apps = S.data.apps || [];
+  const grp = (k) => apps.filter((a) => a.kind === k);
+  const sec = (title, l) => l.length ? `<div class="sec">${title} <span>${l.length}</span></div><div class="apps">${l.map(appCard).join("")}</div>` : "";
+  view().innerHTML = `<div class="top"><div class="hello">${greeting()}</div><div class="h1">Your apps</div>
+    <div class="hello" style="margin-top:3px">Everything in one place · private apps open only after unlock</div></div>
+    <a class="appc gl" href="#library"><span class="ae">📚</span><span class="at"><b>Library files</b><small>${S.data.files.length} files from all your assistants</small></span><span class="ak">Open</span></a>
+    ${sec("🔐 Private apps", grp("private-static"))}${sec("🌍 Public apps", grp("public"))}${sec("🛠 Needs hosting", grp("needs-hosting"))}`;
+}
+async function renderApp(id) {
+  const a = (S.data.apps || []).find((x) => x.id === id);
+  if (!a || !a.b) { renderApps(); return; }
+  renderApps();
+  closeAppFrame();
+  const r = document.createElement("div"); r.className = "reader appview"; r.id = "appview";
+  r.innerHTML = `<div class="bar2"><button class="back" id="ax">‹ Apps</button><b>${esc(a.emoji)} ${esc(a.name)}</b><span></span></div><div class="body"><div class="spinner"></div></div>`;
+  document.body.appendChild(r); document.body.style.overflow = "hidden";
+  $("#ax").onclick = () => { if (S.navCount > 0 && history.length > 1) history.back(); else location.hash = "#apps"; };
+  try {
+    const buf = await fetchDec(a.b, a.gz);
+    const url = URL.createObjectURL(new Blob([buf], { type: "text/html" }));
+    const fr = document.createElement("iframe"); fr.className = "appframe";
+    fr.setAttribute("sandbox", "allow-scripts allow-popups allow-forms allow-modals");
+    fr.setAttribute("allow", "autoplay");
+    fr.src = url; r._url = url;
+    const body = r.querySelector(".body"); body.innerHTML = ""; body.appendChild(fr);
+  } catch (e) { r.querySelector(".body").innerHTML = `<div class="empty">Couldn't open this app: ${esc(e.message)}</div>`; }
+}
+function closeAppFrame() { const r = $("#appview"); if (r) { if (r._url) URL.revokeObjectURL(r._url); r.remove(); document.body.style.overflow = ""; } }
 
 /* ---------------- Today ---------------- */
 function greeting() {
@@ -501,7 +538,7 @@ function renderSettings() {
   ["en", "qh", "qs", "qe"].forEach((id) => ($("#" + id).onchange = save));
   $("#cp").onclick = async () => { try { await navigator.clipboard.writeText(n.topic); toast("Topic copied"); } catch (e) { toast(n.topic); } };
   $("#rf").onclick = async () => { $("#rf").textContent = "…"; try { await loadData(); toast("Library is up to date"); renderSettings(); } catch (e) { toast("Offline — showing saved copy"); $("#rf").textContent = "Refresh"; } };
-  $("#lk").onclick = async () => { await forgetKey(); S.key = null; S.data = null; location.hash = "#today"; renderLock(); };
+  $("#lk").onclick = async () => { await forgetKey(); S.key = null; S.data = null; location.hash = "#apps"; renderLock(); };
 }
 
 /* ---------------- boot ---------------- */

@@ -113,3 +113,15 @@ input[type=time]{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgb
 .needitem .co{font-weight:700;font-size:14.5px}.needitem .ro{color:var(--muted);font-size:12.5px;margin-top:1px}
 .needitem .nx{margin-top:7px;font-size:13px;line-height:1.45;background:rgba(255,138,91,.12);border-left:3px solid #ff8a5b;padding:7px 10px;border-radius:0 10px 10px 0}
 .ok{color:#7be0b0}
+
+.apps{margin:0 16px}
+.appc{display:flex;align-items:center;gap:12px;margin:0 16px 10px;padding:14px;border-radius:18px;color:inherit;text-decoration:none}
+.apps .appc{margin:0 0 10px}
+.appc .ae{font-size:26px;width:46px;height:46px;flex:none;display:grid;place-items:center;border-radius:14px;background:linear-gradient(135deg,#a35cff55,#ff6bd655)}
+.appc .at{flex:1;min-width:0}.appc .at b{display:block;font-size:15px}.appc small{display:block;opacity:.7;font-size:12.5px;margin-top:2px;line-height:1.35}
+.appc .note{opacity:.85;color:#ffd08a}
+.appc .ak{font-size:12px;padding:6px 10px;border-radius:999px;background:#ffffff1a;white-space:nowrap}
+.appc .ak.pub{background:#3d7bff44}
+.appc.dim{opacity:.75}
+.appview .body{padding:0!important;overflow:hidden!important}
+.appframe{display:block;width:100%;height:100%;border:0;background:#fff}
