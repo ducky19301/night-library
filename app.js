@@ -184,7 +184,7 @@ async function renderApp(id) {
   $("#ax").onclick = () => { if (S.navCount > 0 && history.length > 1) history.back(); else location.hash = "#apps"; };
   try {
     const buf = await fetchDec(a.b, a.gz);
-    const url = URL.createObjectURL(new Blob([buf], { type: "text/html" }));
+    const url = URL.createObjectURL(new Blob([buf], { type: "text/html;charset=utf-8" }));
     const fr = document.createElement("iframe"); fr.className = "appframe";
     fr.setAttribute("sandbox", "allow-scripts allow-popups allow-forms allow-modals");
     fr.setAttribute("allow", "autoplay");
