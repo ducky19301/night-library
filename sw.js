@@ -1,5 +1,5 @@
 /* Library service worker. Shell + encrypted blobs cached; data.bin network-first. */
-const VERSION = "92009be820c5";
+const VERSION = "528d32746600";
 const SHELL = ["./", "app.js", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png", "index.html", "keyinfo.json", "manifest.webmanifest", "robots.txt", "styles.css", "vendor/marked.min.js", "vendor/pdf.min.mjs", "vendor/pdf.worker.min.mjs", "vendor/purify.min.js", "vendor/standard_fonts/FoxitDingbats.pfb", "vendor/standard_fonts/FoxitFixed.pfb", "vendor/standard_fonts/FoxitFixedBold.pfb", "vendor/standard_fonts/FoxitFixedBoldItalic.pfb", "vendor/standard_fonts/FoxitFixedItalic.pfb", "vendor/standard_fonts/FoxitSerif.pfb", "vendor/standard_fonts/FoxitSerifBold.pfb", "vendor/standard_fonts/FoxitSerifBoldItalic.pfb", "vendor/standard_fonts/FoxitSerifItalic.pfb", "vendor/standard_fonts/FoxitSymbol.pfb", "vendor/standard_fonts/LICENSE_FOXIT", "vendor/standard_fonts/LICENSE_LIBERATION", "vendor/standard_fonts/LiberationSans-Bold.ttf", "vendor/standard_fonts/LiberationSans-BoldItalic.ttf", "vendor/standard_fonts/LiberationSans-Italic.ttf", "vendor/standard_fonts/LiberationSans-Regular.ttf"];
 const SHELL_CACHE = "lib-shell-" + VERSION;
 const BLOB_CACHE = "lib-blobs-v1";
