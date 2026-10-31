@@ -89,8 +89,20 @@ function toast(msg) {
   clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), 2400);
 }
 const sortRecent = (a, b) => (b.noted || "").localeCompare(a.noted || "") || (b.mtime || "").localeCompare(a.mtime || "");
+function appOf(id) { return ((S.data && S.data.apps) || []).find((x) => x.id === id); }
+function fileApps(f) { return (f.apps || []).map(appOf).filter(Boolean); }
+function openAppById(id) {
+  const a = appOf(id); if (!a) return;
+  if (a.kind === "public") window.open(a.url, "_blank", "noopener"); else location.hash = "#app/" + a.id;
+}
+document.addEventListener("click", (e) => {
+  const c = e.target.closest && e.target.closest("[data-app]");
+  if (!c) return; e.preventDefault(); e.stopPropagation(); openAppById(c.dataset.app);
+}, true);
+function appChip(a) { return `<span class="appchip" role="button" data-app="${esc(a.id)}">${esc(a.emoji)} Open app${a.kind === "public" ? " ↗" : ""}</span>`; }
 function fileRow(f, right) {
-  const r = right ?? (f.mislabeled ? `<span class="flag">Mislabeled</span>` : `<span class="r">${esc(fmtDate(f.noted || f.mtime))}</span>`);
+  const fa = fileApps(f);
+  const r = (fa.length ? appChip(fa[0]) : "") + (right ?? (f.mislabeled ? `<span class="flag">Mislabeled</span>` : `<span class="r">${esc(fmtDate(f.noted || f.mtime))}</span>`));
   return `<a class="li" href="#file/${f.id}"><span class="l"><span class="cdot" style="background:${A(f.a).color}"></span>${icon(f)} <span class="t">${esc(f.title)}</span></span>${r}</a>`;
 }
 
@@ -171,7 +183,8 @@ function renderApps() {
   view().innerHTML = `<div class="top"><div class="hello">${greeting()}</div><div class="h1">Your apps</div>
     <div class="hello" style="margin-top:3px">Everything in one place · private apps open only after unlock</div></div>
     <a class="appc gl" href="#library"><span class="ae">📚</span><span class="at"><b>Library files</b><small>${S.data.files.length} files from all your assistants</small></span><span class="ak">Open</span></a>
-    ${sec("🔐 Private apps", grp("private-static"))}${sec("🌍 Public apps", grp("public"))}${sec("🛠 Needs hosting", grp("needs-hosting"))}`;
+    ${sec("🔐 Private apps", grp("private-static"))}${sec("🌍 Public apps", grp("public"))}${sec("🛠 Needs hosting", grp("needs-hosting"))}
+    ${apps.some((a) => (a.files || []).length) ? `<div class="sec">📎 Related files by app</div>${apps.filter((a) => (a.files || []).length).map((a) => `<div class="card gl small"><b>${esc(a.emoji)} ${esc(a.name)}</b><div class="chips">${a.files.map((i) => S.byId[i]).filter(Boolean).map((l) => `<a href="#file/${l.id}">${esc(l.title)}</a>`).join("")}</div></div>`).join("")}` : ""}`;
 }
 async function renderApp(id) {
   const a = (S.data.apps || []).find((x) => x.id === id);
@@ -386,6 +399,7 @@ async function renderFile(id) {
     <div class="hello">${a.emoji} ${esc(a.name)} · ${esc(fmtDate(f.noted || f.mtime))}</div><div class="h1 sm">${esc(f.title)}</div></div>
     ${f.mislabeled ? `<div class="card warn">⚠️ ${esc(f.mislabeled)}</div>` : ""}
     ${statusCard(f)}
+    ${fileApps(f).length ? `<div class="btns">${fileApps(f).map((x) => `<button class="btn pri appbtn" data-app="${esc(x.id)}">${esc(x.emoji)} Open ${esc(x.name)}${x.kind === "public" ? " ↗" : ""}</button>`).join("")}</div>` : ""}
     <div id="pv" class="paper clip"><div class="spinner"></div></div>
     <div class="btns"><button class="btn pri" id="open">Open full</button><button class="btn gl" id="share">Share</button><button class="btn gl" id="pin">${isPinned(f.id) ? "★ Pinned" : "⭐ Pin"}</button></div>
     ${links.length ? `<div class="card gl small"><b>Linked files</b><div class="chips">${links.map((l) => `<a href="#file/${l.id}"><span class="cdot" style="background:${A(l.a).color};margin:0"></span>${esc(l.title)}</a>`).join("")}</div></div>` : ""}
