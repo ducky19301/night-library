@@ -366,7 +366,7 @@ function renderSearch() {
       }).filter(Boolean).sort((a, b) => b.score - a.score || sortRecent(a.f, b.f)).slice(0, 80);
     }
     $("#res").innerHTML = `<div class="sec">${q ? `${res.length} result${res.length === 1 ? "" : "s"}` : "Recent"}${q && !S.search ? " <span>(text index loading…)</span>" : ""}</div>` +
-      (res.length ? `<div class="card gl" style="padding:4px 14px">${res.map(({ f, snip }) => `<a class="li" href="#file/${f.id}"><span class="l"><span class="cdot" style="background:${A(f.a).color}"></span><span style="min-width:0">${icon(f)} ${esc(f.title)}<small>${snip ? "…" + esc(snip) + "…" : esc(f.desc || f.name)}</small></span></span>${f.mislabeled ? `<span class="flag">Mislabeled</span>` : ""}</a>`).join("")}</div>` : `<div class="empty">No matches.</div>`);
+      (res.length ? `<div class="card gl" style="padding:4px 14px">${res.map(({ f, snip }) => `<a class="li" href="#file/${f.id}"><span class="l"><span class="cdot" style="background:${A(f.a).color}"></span><span style="min-width:0">${icon(f)} ${esc(f.title)}<small>${snip ? "…" + esc(snip) + "…" : esc(f.desc || f.name)}</small></span></span>${fileApps(f).length ? appChip(fileApps(f)[0]) : ""}${f.mislabeled ? `<span class="flag">Mislabeled</span>` : ""}</a>`).join("")}</div>` : `<div class="empty">No matches.</div>`);
   };
   $("#q").oninput = run;
   $("#qf").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; sessionStorage.setItem("qf", b.dataset.k); $("#qf").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); run(); };
