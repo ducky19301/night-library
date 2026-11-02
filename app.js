@@ -191,7 +191,7 @@ async function renderApp(id) {
   if (!a || !a.b) { renderApps(); return; }
   renderApps();
   closeAppFrame();
-  const r = document.createElement("div"); r.className = "reader appview"; r.id = "appview";
+  const r = document.createElement("div"); r.className = "reader appview"; r.id = "appview"; r.dataset.app = a.id;
   r.innerHTML = `<div class="bar2"><button class="back" id="ax">‹ Apps</button><b>${esc(a.emoji)} ${esc(a.name)}</b><span></span></div><div class="body"><div class="spinner"></div></div>`;
   document.body.appendChild(r); document.body.style.overflow = "hidden";
   $("#ax").onclick = () => { if (S.navCount > 0 && history.length > 1) history.back(); else location.hash = "#apps"; };
@@ -205,6 +205,20 @@ async function renderApp(id) {
     const body = r.querySelector(".body"); body.innerHTML = ""; body.appendChild(fr);
   } catch (e) { r.querySelector(".body").innerHTML = `<div class="empty">Couldn't open this app: ${esc(e.message)}</div>`; }
 }
+/* Storage bridge for private apps: a sandboxed app frame has no storage of its own, so it may keep its data here,
+   namespaced by the app id the hub assigns (the frame cannot pick another app's namespace). Data stays on this device. */
+let APPDB;
+function appDB() { return APPDB = APPDB || new Promise((res, rej) => { const q = indexedDB.open("hub-appdata", 1); q.onupgradeneeded = () => q.result.createObjectStore("kv"); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); }
+async function appKV(op, key, value) { const db = await appDB(); return new Promise((res, rej) => { const t = db.transaction("kv", op === "get" ? "readonly" : "readwrite"), st = t.objectStore("kv");
+  const q = op === "get" ? st.get(key) : op === "set" ? st.put(value, key) : st.delete(key); t.oncomplete = () => res(op === "get" ? q.result : undefined); t.onerror = () => rej(t.error); }); }
+addEventListener("message", async (ev) => {
+  const r = $("#appview"), fr = r && r.querySelector("iframe.appframe"), d = ev.data;
+  if (!fr || ev.source !== fr.contentWindow || !d || typeof d.__hubStore !== "string" || typeof d.key !== "string") return;
+  const reply = (m) => ev.source.postMessage({ __hubStoreReply: 1, rid: d.rid, ...m }, "*");
+  if (!["get", "set", "del"].includes(d.__hubStore)) return reply({ error: "bad op" });
+  if (d.key === "ping") return reply({ value: "pong" });
+  try { reply({ value: await appKV(d.__hubStore, r.dataset.app + ":" + d.key, d.value) }); } catch (e) { reply({ error: String(e && e.message || e) }); }
+});
 function closeAppFrame() { const r = $("#appview"); if (r) { if (r._url) URL.revokeObjectURL(r._url); r.remove(); document.body.style.overflow = ""; } }
 
 /* ---------------- Today ---------------- */
